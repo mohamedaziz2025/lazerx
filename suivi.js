@@ -191,27 +191,52 @@
         }
     };
 
+    // ─── Modal helpers ───
+    window.setAttendanceBtn = function(val) {
+        document.getElementById('modalAttendance').value = val;
+        document.getElementById('attPresent').className = 'att-btn' + (val === 'present' ? ' active-present' : '');
+        document.getElementById('attAbsent').className = 'att-btn' + (val === 'absent' ? ' active-absent' : '');
+        document.getElementById('attRescheduled').className = 'att-btn' + (val === 'rescheduled' ? ' active-reschedule' : '');
+    };
+
+    window.setPaymentBtn = function(val) {
+        const current = document.getElementById('modalPaymentMethod').value;
+        const newVal = current === val ? '' : val;
+        document.getElementById('modalPaymentMethod').value = newVal;
+        document.getElementById('payEspeces').className = 'pay-btn' + (newVal === 'especes' ? ' active-especes' : '');
+        document.getElementById('payCheque').className = 'pay-btn' + (newVal === 'cheque' ? ' active-cheque' : '');
+    };
+
     // ─── Modal ───
     window.openModal = function(id) {
         const session = sessions.find(s => s.id === id);
         if (!session) return;
         currentSessionId = id;
 
-        document.getElementById('modalName').value = session.client_name || '';
-        document.getElementById('modalPhone').value = session.phone || '';
-        document.getElementById('modalCategory').value = CAT_NAMES[session.category] || session.category || '';
-        document.getElementById('modalDateTime').value = formatDate(session.date) + ' à ' + formatTime(session.time);
+        // Header
+        const initials = (session.client_name || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+        document.getElementById('modalAvatar').textContent = initials;
+        document.getElementById('modalName').textContent = session.client_name || '—';
+        document.getElementById('modalPhone').textContent = '📞 ' + (session.phone || '-');
+        document.getElementById('modalCategory').textContent = CAT_NAMES[session.category] || session.category || '-';
+        document.getElementById('modalDateTime').textContent = '📅 ' + formatDate(session.date) + ' à ' + formatTime(session.time);
 
+        // Price & discount
         const stdPrice = PRICES[session.category] || 0;
-        document.getElementById('modalPrice').value = session.price || stdPrice;
-        document.getElementById('modalStandardPrice').textContent = 'Standard: ' + stdPrice.toLocaleString(LOCALE) + ' ' + CURRENCY;
+        document.getElementById('modalPrice').value = session.price != null ? session.price : stdPrice;
+        document.getElementById('modalStandardPrice').textContent = 'Tarif standard: ' + stdPrice.toLocaleString(LOCALE) + ' ' + CURRENCY;
         const discountVal = session.discount || 0;
         document.getElementById('modalDiscount').value = discountVal || '';
-        const finalPrice = Math.max(0, (session.price || stdPrice) - discountVal);
-        document.getElementById('modalFinalPrice').textContent = discountVal > 0 ? 'Prix final: ' + finalPrice.toLocaleString(LOCALE) + ' ' + CURRENCY : '';
+        const finalPrice = Math.max(0, (session.price != null ? session.price : stdPrice) - discountVal);
+        document.getElementById('modalFinalPrice').textContent = discountVal > 0 ? '→ Net: ' + finalPrice.toLocaleString(LOCALE) + ' ' + CURRENCY : '';
+
+        // Buttons state
+        setAttendanceBtn(session.attendance || '');
         document.getElementById('modalPaymentMethod').value = session.payment_method || '';
+        document.getElementById('payEspeces').className = 'pay-btn' + (session.payment_method === 'especes' ? ' active-especes' : '');
+        document.getElementById('payCheque').className = 'pay-btn' + (session.payment_method === 'cheque' ? ' active-cheque' : '');
+
         document.getElementById('modalNotes').value = session.notes || '';
-        document.getElementById('modalAttendance').value = session.attendance || '';
 
         document.getElementById('sessionModal').classList.add('active');
 
@@ -219,7 +244,7 @@
             const p = parseFloat(document.getElementById('modalPrice').value) || 0;
             const d = parseFloat(document.getElementById('modalDiscount').value) || 0;
             const hint = document.getElementById('modalFinalPrice');
-            hint.textContent = d > 0 ? 'Prix final: ' + Math.max(0, p - d).toLocaleString(LOCALE) + ' ' + CURRENCY : '';
+            hint.textContent = d > 0 ? '→ Net: ' + Math.max(0, p - d).toLocaleString(LOCALE) + ' ' + CURRENCY : '';
         }
         document.getElementById('modalPrice').oninput = updateFinalPrice;
         document.getElementById('modalDiscount').oninput = updateFinalPrice;

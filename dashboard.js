@@ -296,63 +296,139 @@
     };
 
     // ─── Newsletter ───
+    const NL_MANUAL_KEY   = 'lazerx_' + CENTER_ID + '_nl_manual';
+    const NL_EXCLUDED_KEY = 'lazerx_' + CENTER_ID + '_nl_excluded';
+
     let clientEmails = [];
+
+    function getManualEmails() {
+        try { return JSON.parse(localStorage.getItem(NL_MANUAL_KEY) || '[]'); } catch(e) { return []; }
+    }
+    function saveManualEmails(list) {
+        localStorage.setItem(NL_MANUAL_KEY, JSON.stringify(list));
+    }
+    function getExcluded() {
+        try { return new Set(JSON.parse(localStorage.getItem(NL_EXCLUDED_KEY) || '[]')); } catch(e) { return new Set(); }
+    }
+    function saveExcluded(set) {
+        localStorage.setItem(NL_EXCLUDED_KEY, JSON.stringify([...set]));
+    }
+
+    function getCombinedList() {
+        const excluded = getExcluded();
+        const manual   = getManualEmails();
+        const manualAddrs = new Set(manual.map(m => m.email.toLowerCase()));
+        const fromClients = clientEmails
+            .filter(c => !excluded.has(c.email.toLowerCase()) && !manualAddrs.has(c.email.toLowerCase()))
+            .map(c => ({ name: c.client_name || '', email: c.email, source: 'client' }));
+        const fromManual  = manual.map(m => ({ name: m.name || '', email: m.email, source: 'manual' }));
+        return [...fromClients, ...fromManual];
+    }
+
+    function renderEmailList() {
+        const combined = getCombinedList();
+        const badge = document.getElementById('clientEmailCount');
+        if (badge) badge.textContent = combined.length + ' email' + (combined.length !== 1 ? 's' : '');
+
+        const tbody = document.getElementById('emailListBody');
+        if (!tbody) return;
+        if (!combined.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">Aucun email dans la liste</td></tr>';
+            return;
+        }
+        tbody.innerHTML = combined.map((c, i) =>
+            '<tr>' +
+            '<td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (c.name || '—') + '</td>' +
+            '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + c.email + '</td>' +
+            '<td><span class="source-badge ' + (c.source === 'client' ? 'source-client' : 'source-manual') + '">' +
+                (c.source === 'client' ? 'Client' : 'Manuel') + '</span></td>' +
+            '<td><button class="btn-remove" onclick="removeEmailFromList(\'' + encodeURIComponent(c.email) + '\',\'' + c.source + '\')" title="Retirer">&#10005;</button></td>' +
+            '</tr>'
+        ).join('');
+    }
 
     window.loadClientEmails = async function() {
         try {
             const data = await apiFetch('/.netlify/functions/get-client-emails?center=' + CENTER_ID);
             clientEmails = data.emails || [];
-            const badge = document.getElementById('clientEmailCount');
-            if (badge) badge.textContent = clientEmails.length + ' client' + (clientEmails.length !== 1 ? 's' : '');
         } catch (e) {
             console.error('Erreur chargement emails:', e);
         }
+        renderEmailList();
+    };
+
+    window.addManualEmail = function() {
+        const nameEl  = document.getElementById('newEmailName');
+        const emailEl = document.getElementById('newEmailAddr');
+        const email = emailEl.value.trim().toLowerCase();
+        const name  = nameEl.value.trim();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            emailEl.style.borderColor = '#dc2626';
+            setTimeout(() => { emailEl.style.borderColor = ''; }, 2000);
+            return;
+        }
+        const manual = getManualEmails();
+        if (manual.find(m => m.email.toLowerCase() === email)) {
+            emailEl.style.borderColor = '#d97706';
+            setTimeout(() => { emailEl.style.borderColor = ''; }, 2000);
+            return;
+        }
+        const excluded = getExcluded();
+        excluded.delete(email);
+        saveExcluded(excluded);
+        manual.push({ name, email });
+        saveManualEmails(manual);
+        nameEl.value = '';
+        emailEl.value = '';
+        renderEmailList();
+    };
+
+    window.removeEmailFromList = function(encodedEmail, source) {
+        const email = decodeURIComponent(encodedEmail).toLowerCase();
+        if (source === 'manual') {
+            const manual = getManualEmails().filter(m => m.email.toLowerCase() !== email);
+            saveManualEmails(manual);
+        } else {
+            const excluded = getExcluded();
+            excluded.add(email);
+            saveExcluded(excluded);
+        }
+        renderEmailList();
     };
 
     window.sendNewsletter = async function() {
-        const subject = document.getElementById('newsletterSubject').value.trim();
-        const message = document.getElementById('newsletterMessage').value.trim();
+        const subject  = document.getElementById('newsletterSubject').value.trim();
+        const message  = document.getElementById('newsletterMessage').value.trim();
         const statusEl = document.getElementById('newsletterStatus');
+        const combined = getCombinedList();
 
-        if (!subject || !message) {
-            statusEl.textContent = 'Veuillez remplir le sujet et le message.';
-            statusEl.className = 'newsletter-status error';
+        function showStatus(msg, type) {
+            statusEl.textContent = msg;
+            statusEl.className = 'newsletter-status ' + type;
             statusEl.style.display = 'inline';
-            setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
-            return;
+            setTimeout(() => { statusEl.style.display = 'none'; }, 6000);
         }
 
-        if (!clientEmails.length) {
-            statusEl.textContent = 'Aucun client avec email enregistré.';
-            statusEl.className = 'newsletter-status error';
-            statusEl.style.display = 'inline';
-            setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
-            return;
-        }
+        if (!subject || !message) return showStatus('Veuillez remplir le sujet et le message.', 'error');
+        if (!combined.length)    return showStatus('La liste de destinataires est vide.', 'error');
 
         try {
-            const emailList = clientEmails.map(c => c.email);
             const res = await fetch('/.netlify/functions/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ to: emailList, subject, message })
+                body: JSON.stringify({ to: combined.map(c => c.email), subject, message })
             });
             const data = await res.json();
-
             if (data.success) {
-                statusEl.textContent = '✓ Newsletter envoyée à ' + data.sent + ' client(s)';
-                statusEl.className = 'newsletter-status ok';
+                showStatus('✓ Envoyé à ' + data.sent + ' destinataire(s)', 'ok');
                 document.getElementById('newsletterSubject').value = '';
                 document.getElementById('newsletterMessage').value = '';
             } else {
                 throw new Error(data.message || 'Erreur inconnue');
             }
         } catch (e) {
-            statusEl.textContent = '✗ Erreur: ' + e.message;
-            statusEl.className = 'newsletter-status error';
+            showStatus('✗ Erreur: ' + e.message, 'error');
         }
-        statusEl.style.display = 'inline';
-        setTimeout(() => { statusEl.style.display = 'none'; }, 6000);
     };
 
     // ─── PWA ───

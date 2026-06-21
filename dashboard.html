@@ -147,19 +147,40 @@
         .pwa-row { display: flex; align-items: center; gap: 14px; }
         .pwa-desc { font-size: 14px; color: var(--muted); }
 
-        /* Newsletter */
-        .newsletter-form { display: flex; flex-direction: column; gap: 14px; }
-        .newsletter-form label { font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 4px; display: block; }
-        .newsletter-form input[type="text"], .newsletter-form textarea {
-            width: 100%; padding: 10px 12px; border: 1px solid var(--border);
-            border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--text);
-            background: var(--surface); transition: border-color .15s; resize: vertical;
-        }
-        .newsletter-form input:focus, .newsletter-form textarea:focus { outline: none; border-color: var(--brand-mid); }
-        .newsletter-status { font-size: 13px; margin-top: 8px; display: none; }
+        /* Newsletter layout */
+        .newsletter-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .nl-panel { display: flex; flex-direction: column; gap: 12px; }
+        .nl-panel-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+        .client-count-badge { display: inline-block; background: #eff6ff; color: var(--brand-mid); padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+        /* Add email row */
+        .add-email-row { display: flex; gap: 6px; }
+        .add-email-row input { flex: 1; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; }
+        .add-email-row input:focus { border-color: var(--brand-mid); }
+
+        /* Email list table */
+        .email-list-wrapper { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; max-height: 280px; overflow-y: auto; }
+        .email-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .email-table thead th { background: #f8fafc; padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--border); }
+        .email-table tbody td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .email-table tbody tr:last-child td { border-bottom: none; }
+        .email-table tbody tr:hover { background: #f8fafc; }
+        .source-badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+        .source-client { background: #eff6ff; color: var(--brand-mid); }
+        .source-manual { background: #f0fdf4; color: #15803d; }
+        .btn-remove { background: none; border: none; cursor: pointer; color: #dc2626; font-size: 15px; padding: 2px 6px; border-radius: 6px; transition: background .15s; }
+        .btn-remove:hover { background: #fee2e2; }
+
+        /* Compose */
+        .compose-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 5px; }
+        .compose-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; box-sizing: border-box; transition: border-color .15s; resize: vertical; }
+        .compose-input:focus { border-color: var(--brand-mid); }
+        .compose-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+        .newsletter-status { font-size: 13px; display: none; }
         .newsletter-status.ok { color: var(--success); }
         .newsletter-status.error { color: var(--danger); }
-        .client-count-badge { display: inline-block; background: #eff6ff; color: var(--brand-mid); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-left: 10px; }
+
+        @media (max-width: 860px) { .newsletter-layout { grid-template-columns: 1fr; } }
 
         /* Footer */
         footer { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
@@ -292,24 +313,61 @@
 
         <!-- Newsletter -->
         <div class="section">
-            <div class="section-title">
-                Newsletter clients
-                <span class="client-count-badge" id="clientEmailCount">&#8212; clients</span>
-            </div>
-            <div class="newsletter-form">
-                <div>
-                    <label>Sujet</label>
-                    <input type="text" id="newsletterSubject" placeholder="Objet du message...">
+            <div class="section-title">&#128231; Newsletter clients</div>
+            <div class="newsletter-layout">
+
+                <!-- Panneau gauche : liste des emails -->
+                <div class="nl-panel">
+                    <div class="nl-panel-title">
+                        Liste des destinataires
+                        <span class="client-count-badge" id="clientEmailCount">0 email</span>
+                    </div>
+
+                    <!-- Ajouter un email -->
+                    <div class="add-email-row">
+                        <input type="text"  id="newEmailName" placeholder="Nom (optionnel)">
+                        <input type="email" id="newEmailAddr" placeholder="email@exemple.com">
+                        <button class="btn btn-primary" onclick="addManualEmail()">&#43; Ajouter</button>
+                    </div>
+
+                    <!-- Tableau des emails -->
+                    <div class="email-list-wrapper">
+                        <table class="email-table">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>Source</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="emailListBody">
+                                <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-outline" onclick="loadClientEmails()" style="font-size:12px;">&#8635; Actualiser depuis clients</button>
+                    </div>
                 </div>
-                <div>
-                    <label>Message</label>
-                    <textarea id="newsletterMessage" rows="6" placeholder="Votre message pour les clients..."></textarea>
+
+                <!-- Panneau droit : composer -->
+                <div class="nl-panel">
+                    <div class="nl-panel-title">Composer le message</div>
+                    <div>
+                        <label class="compose-label">Sujet</label>
+                        <input type="text" id="newsletterSubject" class="compose-input" placeholder="Objet du message...">
+                    </div>
+                    <div>
+                        <label class="compose-label">Message</label>
+                        <textarea id="newsletterMessage" class="compose-input" rows="9" placeholder="Votre message pour les clients..."></textarea>
+                    </div>
+                    <div class="compose-footer">
+                        <span class="newsletter-status" id="newsletterStatus"></span>
+                        <button class="btn btn-primary" onclick="sendNewsletter()">&#128231; Envoyer la newsletter</button>
+                    </div>
                 </div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <button class="btn btn-primary" onclick="sendNewsletter()">&#128231; Envoyer à tous les clients</button>
-                    <button class="btn btn-outline" onclick="loadClientEmails()">&#8635; Actualiser la liste</button>
-                    <span class="newsletter-status" id="newsletterStatus"></span>
-                </div>
+
             </div>
         </div>
 

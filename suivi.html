@@ -138,20 +138,76 @@
         .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         .checkbox-label input { width: auto; accent-color: var(--brand-mid); }
 
-        /* Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.6); display: none; align-items: center; justify-content: center; z-index: 9000; backdrop-filter: blur(2px); }
+        /* Modal overlay */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.6); display: none; align-items: center; justify-content: center; z-index: 9000; backdrop-filter: blur(3px); }
         .modal-overlay.active { display: flex; }
-        .modal-box { background: var(--surface); border-radius: 16px; padding: 28px; max-width: 480px; width: 92%; max-height: 85vh; overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,.2); }
-        .modal-box h3 { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
-        .form-group input, .form-group select {
-            width: 100%; padding: 10px 12px; border: 1px solid var(--border);
-            border-radius: 8px; font-size: 14px; font-family: inherit; color: var(--text);
-            background: var(--bg); transition: border-color .15s;
+
+        /* Modal box */
+        .modal-box { background: var(--surface); border-radius: 20px; padding: 0; max-width: 500px; width: 94%; max-height: 90vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,.25); }
+
+        /* Client header band */
+        .modal-client-header {
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%);
+            padding: 20px 22px; display: flex; align-items: center; gap: 14px;
+            border-radius: 20px 20px 0 0; position: relative;
         }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--brand-mid); background: var(--surface); }
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .client-avatar {
+            width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.25);
+            color: #fff; font-weight: 700; font-size: 17px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,.4);
+        }
+        .client-header-info { flex: 1; min-width: 0; }
+        .modal-client-name { font-size: 16px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .modal-client-sub { font-size: 12px; color: rgba(255,255,255,.8); margin-top: 3px; line-height: 1.5; }
+        .modal-close-btn { background: rgba(255,255,255,.2); border: none; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
+        .modal-close-btn:hover { background: rgba(255,255,255,.35); }
+
+        /* Modal body */
+        .modal-body { padding: 22px; }
+        .modal-section { margin-bottom: 20px; }
+        .modal-section-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px; }
+
+        /* Attendance buttons */
+        .attendance-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+        .att-btn {
+            padding: 14px 6px; border: 2px solid var(--border); border-radius: 12px;
+            font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+            background: var(--bg); color: var(--muted); transition: all .15s;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
+        .att-btn .att-icon { font-size: 20px; }
+        .att-btn:hover { border-color: var(--brand-mid); color: var(--brand-mid); background: #eff6ff; }
+        .att-btn.active-present { border-color: var(--success); background: #dcfce7; color: #15803d; }
+        .att-btn.active-absent  { border-color: var(--danger);  background: #fee2e2; color: #b91c1c; }
+        .att-btn.active-reschedule { border-color: var(--warning); background: #fef3c7; color: #b45309; }
+
+        /* Payment grid */
+        .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .field-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 5px; }
+        .field-input {
+            width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+            border-radius: 9px; font-size: 14px; font-family: inherit; color: var(--text);
+            background: var(--bg); transition: border-color .15s; box-sizing: border-box;
+        }
+        .field-input:focus { outline: none; border-color: var(--brand-mid); background: var(--surface); }
+        .price-hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+        /* Payment method toggles */
+        .payment-method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .pay-btn {
+            padding: 11px 8px; border: 2px solid var(--border); border-radius: 10px;
+            font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+            background: var(--bg); color: var(--muted); transition: all .15s;
+        }
+        .pay-btn:hover { border-color: var(--brand-mid); color: var(--brand-mid); }
+        .pay-btn.active-especes { border-color: #16a34a; background: #dcfce7; color: #15803d; }
+        .pay-btn.active-cheque  { border-color: #7c3aed; background: #f3e8ff; color: #6d28d9; }
+
+        /* Modal footer */
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--border); }
+
+        .form-group { margin-bottom: 14px; }
         .price-hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
         /* Footer */
@@ -247,42 +303,77 @@
     <!-- Session Modal -->
     <div class="modal-overlay" id="sessionModal">
         <div class="modal-box">
-            <h3>Détails de la séance</h3>
-            <div class="form-group"><label>Client</label><input type="text" id="modalName" readonly></div>
-            <div class="form-group"><label>Téléphone</label><input type="text" id="modalPhone" readonly></div>
-            <div class="form-group"><label>Catégorie</label><input type="text" id="modalCategory" readonly></div>
-            <div class="form-group"><label>Date &amp; Heure</label><input type="text" id="modalDateTime" readonly></div>
-            <div class="form-group">
-                <label>Prix (DT)</label>
-                <input type="number" id="modalPrice" min="0" step="50">
-                <div class="price-hint" id="modalStandardPrice"></div>
+
+            <!-- En-tête client -->
+            <div class="modal-client-header">
+                <div class="client-avatar" id="modalAvatar">?</div>
+                <div class="client-header-info">
+                    <div class="modal-client-name" id="modalName">—</div>
+                    <div class="modal-client-sub">
+                        <span id="modalPhone"></span> &bull;
+                        <span id="modalCategory"></span> &bull;
+                        <span id="modalDateTime"></span>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal()">&#215;</button>
             </div>
-            <div class="form-group">
-                <label>Réduction (DT)</label>
-                <input type="number" id="modalDiscount" min="0" step="10" placeholder="0">
-                <div class="price-hint" id="modalFinalPrice"></div>
-            </div>
-            <div class="form-group">
-                <label>Mode de paiement</label>
-                <select id="modalPaymentMethod">
-                    <option value="">-- Non défini --</option>
-                    <option value="especes">Espèces</option>
-                    <option value="cheque">Chèque</option>
-                </select>
-            </div>
-            <div class="form-group"><label>Notes</label><input type="text" id="modalNotes" placeholder="Notes optionnelles..."></div>
-            <div class="form-group">
-                <label>Présence</label>
-                <select id="modalAttendance">
-                    <option value="">-- Sélectionner --</option>
-                    <option value="present">Présent</option>
-                    <option value="absent">Absent</option>
-                    <option value="rescheduled">Reporté</option>
-                </select>
-            </div>
-            <div class="modal-actions">
+
+            <div class="modal-body">
+
+                <!-- État de la séance -->
+                <div class="modal-section">
+                    <div class="modal-section-label">&#9679; État de la séance</div>
+                    <div class="attendance-grid">
+                        <button class="att-btn" id="attPresent" onclick="setAttendanceBtn('present')">
+                            <span class="att-icon">&#10003;</span>
+                            Présent
+                        </button>
+                        <button class="att-btn" id="attAbsent" onclick="setAttendanceBtn('absent')">
+                            <span class="att-icon">&#10007;</span>
+                            Absent
+                        </button>
+                        <button class="att-btn" id="attRescheduled" onclick="setAttendanceBtn('rescheduled')">
+                            <span class="att-icon">&#8635;</span>
+                            Reporté
+                        </button>
+                    </div>
+                    <input type="hidden" id="modalAttendance">
+                </div>
+
+                <!-- Paiement -->
+                <div class="modal-section">
+                    <div class="modal-section-label">&#9679; Paiement</div>
+                    <div class="payment-grid">
+                        <div>
+                            <label class="field-label">Prix (DT)</label>
+                            <input type="number" id="modalPrice" min="0" step="50" class="field-input">
+                            <div class="price-hint" id="modalStandardPrice"></div>
+                        </div>
+                        <div>
+                            <label class="field-label">Réduction (DT)</label>
+                            <input type="number" id="modalDiscount" min="0" step="10" placeholder="0" class="field-input">
+                            <div class="price-hint" id="modalFinalPrice"></div>
+                        </div>
+                    </div>
+                    <div class="modal-section-label" style="margin-top:14px;">&#9679; Mode de paiement</div>
+                    <div class="payment-method-grid">
+                        <button class="pay-btn" id="payEspeces" onclick="setPaymentBtn('especes')">&#128181; Espèces</button>
+                        <button class="pay-btn" id="payCheque"  onclick="setPaymentBtn('cheque')">&#129534; Chèque</button>
+                    </div>
+                    <input type="hidden" id="modalPaymentMethod">
+                </div>
+
+                <!-- Notes -->
+                <div class="modal-section">
+                    <label class="field-label">&#9679; Notes (optionnel)</label>
+                    <input type="text" id="modalNotes" placeholder="Informations complémentaires..." class="field-input">
+                </div>
+
+            </div><!-- /.modal-body -->
+
+            <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
-                <button class="btn btn-primary" onclick="saveSession()">Enregistrer</button>
+                <button class="btn btn-primary" onclick="saveSession()">&#128190; Enregistrer</button>
             </div>
         </div>
     </div>
