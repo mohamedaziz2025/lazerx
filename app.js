@@ -291,7 +291,7 @@ function showBookingDetails(booking) {
   const startTime = new Date(booking.slot_start_utc).toLocaleTimeString(CENTER_LOCALE,{ timeZone:CENTER_TZ, hour:'2-digit', minute:'2-digit' });
   const endTime = new Date(booking.slot_end_utc).toLocaleTimeString(CENTER_LOCALE,{ timeZone:CENTER_TZ, hour:'2-digit', minute:'2-digit' });
   const date = new Date(booking.slot_start_utc).toLocaleDateString(CENTER_LOCALE,{ timeZone:CENTER_TZ, weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  document.getElementById('bookingDetails').innerHTML = `<dl><dt>Date et heure :</dt><dd>${date} de ${startTime} à ${endTime}</dd><dt>Nom :</dt><dd>${booking.client_name}</dd><dt>Téléphone :</dt><dd>${booking.phone}</dd><dt>Catégorie :</dt><dd><span class="category-badge category-badge--${booking.category}">${STRINGS.CATEGORIES[booking.category]}</span></dd>${booking.notes?`<dt>Notes :</dt><dd>${booking.notes}</dd>`:''}<dt>Statut :</dt><dd><span class="status-badge status-badge--${booking.status}">${booking.status==='booked'?'Confirmé':'Annulé'}</span></dd></dl>`;
+  document.getElementById('bookingDetails').innerHTML = `<dl><dt>Date et heure :</dt><dd>${date} de ${startTime} à ${endTime}</dd><dt>Nom :</dt><dd>${booking.client_name}</dd><dt>Téléphone :</dt><dd>${booking.phone}</dd>${booking.email?`<dt>Email :</dt><dd>${booking.email}</dd>`:''}<dt>Catégorie :</dt><dd><span class="category-badge category-badge--${booking.category}">${STRINGS.CATEGORIES[booking.category]}</span></dd>${booking.notes?`<dt>Notes :</dt><dd>${booking.notes}</dd>`:''}<dt>Statut :</dt><dd><span class="status-badge status-badge--${booking.status}">${booking.status==='booked'?'Confirmé':'Annulé'}</span></dd></dl>`;
   document.getElementById('cancelBookingBtn').dataset.bookingId = booking.id;
   modal.showModal();
 }
@@ -324,6 +324,7 @@ async function handleBookingSubmit(event) {
     const bookingData = {
       client_name: formData.get('clientName').trim(),
       phone: formData.get('phone').trim(),
+      email: formData.get('clientEmail')?.trim() || '',
       category: formData.get('category'),
       notes: formData.get('notes')?.trim()||'',
       session_duration: duration,
@@ -520,6 +521,7 @@ function showEditModal(booking) {
   const modal = document.getElementById('editModal');
   document.getElementById('editClientName').value = booking.client_name;
   document.getElementById('editPhone').value = booking.phone;
+  document.getElementById('editEmail').value = booking.email || '';
   document.getElementById('editSessionDuration').value = booking.session_duration||60;
   document.getElementById('editSessionType').value = booking.session_type||'solo';
   document.getElementById('editNotes').value = booking.notes||'';
@@ -540,6 +542,7 @@ async function handleEditSubmit(event) {
     booking_id: document.getElementById('editBookingId').value,
     client_name: formData.get('editClientName').trim(),
     phone: formData.get('editPhone').trim(),
+    email: formData.get('editEmail')?.trim() || '',
     category: formData.get('editCategory'),
     notes: formData.get('editNotes')?.trim()||'',
     session_duration: parseInt(document.getElementById('editSessionDuration').value),

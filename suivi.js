@@ -127,8 +127,11 @@
         }
 
         container.innerHTML = sessions.map(s => {
-            const price = PRICES[s.category] || 0;
+            const basePrice = s.price || PRICES[s.category] || 0;
+            const discount = s.discount || 0;
+            const finalPrice = Math.max(0, basePrice - discount);
             const catName = CAT_NAMES[s.category] || s.category || '-';
+            const paymentLabel = s.payment_method === 'especes' ? '💵 Espèces' : s.payment_method === 'cheque' ? '🧾 Chèque' : '';
             return '<div class="session-card" id="session-' + s.id + '">' +
                 '<div class="session-header">' +
                     '<div>' +
@@ -136,7 +139,11 @@
                         '<span class="session-name">' + (s.client_name || 'Client') + '</span>' +
                         (batchMode ? '</label>' : '') +
                     '</div>' +
-                    '<span class="price-tag">' + price.toLocaleString(LOCALE) + ' ' + CURRENCY + '</span>' +
+                    '<div style="display:flex;gap:6px;align-items:center;">' +
+                        (discount > 0 ? '<span class="badge-discount">-' + discount.toLocaleString(LOCALE) + ' ' + CURRENCY + '</span>' : '') +
+                        (paymentLabel ? '<span class="badge-payment">' + paymentLabel + '</span>' : '') +
+                        '<span class="price-tag">' + finalPrice.toLocaleString(LOCALE) + ' ' + CURRENCY + '</span>' +
+                    '</div>' +
                 '</div>' +
                 '<div class="session-meta">' +
                     '📅 ' + formatDate(s.date) + ' à ' + formatTime(s.time) +
@@ -198,10 +205,24 @@
         const stdPrice = PRICES[session.category] || 0;
         document.getElementById('modalPrice').value = session.price || stdPrice;
         document.getElementById('modalStandardPrice').textContent = 'Standard: ' + stdPrice.toLocaleString(LOCALE) + ' ' + CURRENCY;
+        const discountVal = session.discount || 0;
+        document.getElementById('modalDiscount').value = discountVal || '';
+        const finalPrice = Math.max(0, (session.price || stdPrice) - discountVal);
+        document.getElementById('modalFinalPrice').textContent = discountVal > 0 ? 'Prix final: ' + finalPrice.toLocaleString(LOCALE) + ' ' + CURRENCY : '';
+        document.getElementById('modalPaymentMethod').value = session.payment_method || '';
         document.getElementById('modalNotes').value = session.notes || '';
         document.getElementById('modalAttendance').value = session.attendance || '';
 
         document.getElementById('sessionModal').classList.add('active');
+
+        function updateFinalPrice() {
+            const p = parseFloat(document.getElementById('modalPrice').value) || 0;
+            const d = parseFloat(document.getElementById('modalDiscount').value) || 0;
+            const hint = document.getElementById('modalFinalPrice');
+            hint.textContent = d > 0 ? 'Prix final: ' + Math.max(0, p - d).toLocaleString(LOCALE) + ' ' + CURRENCY : '';
+        }
+        document.getElementById('modalPrice').oninput = updateFinalPrice;
+        document.getElementById('modalDiscount').oninput = updateFinalPrice;
     };
 
     window.closeModal = function() {
@@ -214,9 +235,11 @@
         try {
             const attendance = document.getElementById('modalAttendance').value;
             const price = parseFloat(document.getElementById('modalPrice').value) || 0;
+            const discount = parseFloat(document.getElementById('modalDiscount').value) || 0;
+            const payment_method = document.getElementById('modalPaymentMethod').value;
             const notes = document.getElementById('modalNotes').value;
 
-            const updates = { id: currentSessionId, price, notes };
+            const updates = { id: currentSessionId, price, discount, payment_method, notes };
             if (attendance) {
                 updates.attendance = attendance;
                 updates.status = attendance === 'present' ? 'confirmed' : attendance === 'absent' ? 'no_show' : 'rescheduled';
@@ -301,7 +324,8 @@
             }
 
             bookings.forEach(b => {
-                const price = b.price || PRICES[b.category] || 0;
+                const basePrice = b.price || PRICES[b.category] || 0;
+                const price = Math.max(0, basePrice - (b.discount || 0));
                 const isConfirmed = b.attendance === 'present' || b.status === 'confirmed';
 
                 if (b.date === today && isConfirmed) todayRevenue += price;
@@ -355,8 +379,14 @@
     window.exportFinances = async function() {
         try {
             const { bookings } = await apiFetch('/.netlify/functions/list-bookings?center=' + CENTER_ID + '&status=confirmed');
-            const headers = ['Date', 'Nom', 'Catégorie', 'Présence', 'Montant (' + CURRENCY + ')'];
-            const rows = bookings.map(b => [b.date || '', b.client_name || '', CAT_NAMES[b.category] || b.category || '', b.attendance || '', b.price || PRICES[b.category] || 0]);
+            const headers = ['Date', 'Nom', 'Téléphone', 'Email', 'Catégorie', 'Présence', 'Prix (' + CURRENCY + ')', 'Réduction (' + CURRENCY + ')', 'Net (' + CURRENCY + ')', 'Paiement'];
+            const rows = bookings.map(b => {
+                const basePrice = b.price || PRICES[b.category] || 0;
+                const discount = b.discount || 0;
+                const net = Math.max(0, basePrice - discount);
+                const payLabel = b.payment_method === 'especes' ? 'Espèces' : b.payment_method === 'cheque' ? 'Chèque' : '';
+                return [b.date || '', b.client_name || '', b.phone || '', b.email || '', CAT_NAMES[b.category] || b.category || '', b.attendance || '', basePrice, discount, net, payLabel];
+            });
             let csv = '﻿' + headers.join(';') + '\n';
             rows.forEach(r => { csv += r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(';') + '\n'; });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

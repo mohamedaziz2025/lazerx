@@ -130,6 +130,10 @@
         /* Empty state */
         .empty-state { text-align: center; padding: 48px; color: var(--muted); font-size: 15px; }
 
+        /* Payment & discount badges */
+        .badge-payment { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-discount { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+
         /* Checkbox */
         .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         .checkbox-label input { width: auto; accent-color: var(--brand-mid); }
@@ -252,6 +256,19 @@
                 <label>Prix (DT)</label>
                 <input type="number" id="modalPrice" min="0" step="50">
                 <div class="price-hint" id="modalStandardPrice"></div>
+            </div>
+            <div class="form-group">
+                <label>Réduction (DT)</label>
+                <input type="number" id="modalDiscount" min="0" step="10" placeholder="0">
+                <div class="price-hint" id="modalFinalPrice"></div>
+            </div>
+            <div class="form-group">
+                <label>Mode de paiement</label>
+                <select id="modalPaymentMethod">
+                    <option value="">-- Non défini --</option>
+                    <option value="especes">Espèces</option>
+                    <option value="cheque">Chèque</option>
+                </select>
             </div>
             <div class="form-group"><label>Notes</label><input type="text" id="modalNotes" placeholder="Notes optionnelles..."></div>
             <div class="form-group">

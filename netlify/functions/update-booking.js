@@ -4,7 +4,7 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers: CORS, body: '' };
 
   try {
-    const { booking_id, client_name, phone, category, notes, session_duration, session_type } = JSON.parse(event.body || '{}');
+    const { booking_id, client_name, phone, email, category, notes, session_duration, session_type } = JSON.parse(event.body || '{}');
     if (!booking_id) return err(400, 'booking_id required');
 
     const col = await getCollection();
@@ -12,6 +12,7 @@ exports.handler = async (event) => {
       $set: {
         client_name: client_name?.trim(),
         phone: phone?.trim(),
+        email: email?.trim() || '',
         category,
         notes: notes?.trim() || '',
         session_duration,

@@ -147,6 +147,20 @@
         .pwa-row { display: flex; align-items: center; gap: 14px; }
         .pwa-desc { font-size: 14px; color: var(--muted); }
 
+        /* Newsletter */
+        .newsletter-form { display: flex; flex-direction: column; gap: 14px; }
+        .newsletter-form label { font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 4px; display: block; }
+        .newsletter-form input[type="text"], .newsletter-form textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--text);
+            background: var(--surface); transition: border-color .15s; resize: vertical;
+        }
+        .newsletter-form input:focus, .newsletter-form textarea:focus { outline: none; border-color: var(--brand-mid); }
+        .newsletter-status { font-size: 13px; margin-top: 8px; display: none; }
+        .newsletter-status.ok { color: var(--success); }
+        .newsletter-status.error { color: var(--danger); }
+        .client-count-badge { display: inline-block; background: #eff6ff; color: var(--brand-mid); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-left: 10px; }
+
         /* Footer */
         footer { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
         footer a { color: var(--brand); text-decoration: none; }
@@ -243,13 +257,15 @@
                             <th onclick="sortTable('time')">Heure &#8597;</th>
                             <th onclick="sortTable('name')">Nom &#8597;</th>
                             <th>Téléphone</th>
+                            <th>Email</th>
                             <th onclick="sortTable('category')">Catégorie &#8597;</th>
                             <th onclick="sortTable('status')">Statut &#8597;</th>
+                            <th>Paiement</th>
                             <th onclick="sortTable('revenue')">Montant &#8597;</th>
                         </tr>
                     </thead>
                     <tbody id="bookingsBody">
-                        <tr><td colspan="7" class="loading">Chargement...</td></tr>
+                        <tr><td colspan="9" class="loading">Chargement...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -271,6 +287,29 @@
             <div class="save-row">
                 <button class="btn btn-primary" onclick="saveEmailConfig()">Enregistrer</button>
                 <span id="emailSaveStatus" class="save-ok">&#10003; Enregistré</span>
+            </div>
+        </div>
+
+        <!-- Newsletter -->
+        <div class="section">
+            <div class="section-title">
+                Newsletter clients
+                <span class="client-count-badge" id="clientEmailCount">&#8212; clients</span>
+            </div>
+            <div class="newsletter-form">
+                <div>
+                    <label>Sujet</label>
+                    <input type="text" id="newsletterSubject" placeholder="Objet du message...">
+                </div>
+                <div>
+                    <label>Message</label>
+                    <textarea id="newsletterMessage" rows="6" placeholder="Votre message pour les clients..."></textarea>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button class="btn btn-primary" onclick="sendNewsletter()">&#128231; Envoyer à tous les clients</button>
+                    <button class="btn btn-outline" onclick="loadClientEmails()">&#8635; Actualiser la liste</button>
+                    <span class="newsletter-status" id="newsletterStatus"></span>
+                </div>
             </div>
         </div>
 

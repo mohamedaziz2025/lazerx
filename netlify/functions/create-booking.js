@@ -7,7 +7,7 @@ exports.handler = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
     const {
-      client_name, phone, category, notes = '', session_duration = 60,
+      client_name, phone, email = '', category, notes = '', session_duration = 60,
       session_type = 'solo', slot_start_local, slot_end_local, center, force_create = false
     } = body;
 
@@ -45,6 +45,7 @@ exports.handler = async (event) => {
       center,
       client_name: client_name.trim(),
       phone: phone.trim(),
+      email: email.trim(),
       category,
       notes: notes.trim(),
       session_duration,

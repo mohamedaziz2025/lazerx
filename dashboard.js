@@ -53,6 +53,7 @@
         loadStats();
         loadBookings();
         loadEmailConfig();
+        loadClientEmails();
         setInterval(() => { loadStats(); loadBookings(); }, 60000);
     }
 
@@ -115,7 +116,8 @@
 
             let confirmedRevenue = 0, expectedRevenue = 0;
             bookings.forEach(b => {
-                const price = b.price || PRICES[b.category] || 0;
+                const base = b.price || PRICES[b.category] || 0;
+                const price = Math.max(0, base - (b.discount || 0));
                 if (b.attendance === 'present' || b.status === 'confirmed') confirmedRevenue += price;
                 if (b.status !== 'cancelled') expectedRevenue += price;
             });
@@ -174,22 +176,29 @@
     function renderBookings(bookings) {
         const tbody = document.getElementById('bookingsBody');
         if (!bookings.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="loading">Aucune réservation trouvée</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="loading">Aucune réservation trouvée</td></tr>';
             return;
         }
         const CATS = { tabac: 'Tabac', drogue: 'Drogue', drogue_dure: 'Drogue dure', drogue_douce: 'Drogue douce', renforcement: 'Renforcement' };
+        const PAY_LABELS = { especes: '💵 Espèces', cheque: '🧾 Chèque' };
         tbody.innerHTML = bookings.map(b => {
             const statusClass = b.status === 'confirmed' ? 'status-confirmed' : b.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
             const statusLabel = b.status === 'confirmed' ? 'Confirmé' : b.status === 'cancelled' ? 'Annulé' : 'En attente';
-            const price = b.price || PRICES[b.category] || 0;
+            const basePrice = b.price || PRICES[b.category] || 0;
+            const net = Math.max(0, basePrice - (b.discount || 0));
+            const priceDisplay = b.discount > 0
+                ? '<span style="text-decoration:line-through;color:#aaa;font-size:11px;">' + basePrice.toLocaleString(LOCALE) + '</span> ' + net.toLocaleString(LOCALE) + ' ' + CURRENCY
+                : net.toLocaleString(LOCALE) + ' ' + CURRENCY;
             return '<tr>' +
                 '<td>' + formatDate(b.date) + '</td>' +
                 '<td>' + formatTime(b.time) + '</td>' +
                 '<td>' + (b.client_name || '-') + '</td>' +
                 '<td>' + (b.phone || '-') + '</td>' +
+                '<td>' + (b.email || '-') + '</td>' +
                 '<td>' + (CATS[b.category] || b.category || '-') + '</td>' +
                 '<td><span class="status-badge ' + statusClass + '">' + statusLabel + '</span></td>' +
-                '<td>' + price.toLocaleString(LOCALE) + ' ' + CURRENCY + '</td>' +
+                '<td>' + (PAY_LABELS[b.payment_method] || '-') + '</td>' +
+                '<td>' + priceDisplay + '</td>' +
                 '</tr>';
         }).join('');
     }
@@ -244,11 +253,14 @@
 
     // ─── CSV Export ───
     window.exportCSV = function() {
-        const headers = ['Date', 'Heure', 'Nom', 'Téléphone', 'Catégorie', 'Statut', 'Montant (' + CURRENCY + ')'];
-        const rows = allBookings.map(b => [
-            b.date || '', b.time || '', b.client_name || '', b.phone || '',
-            b.category || '', b.status || '', b.price || PRICES[b.category] || 0
-        ]);
+        const headers = ['Date', 'Heure', 'Nom', 'Téléphone', 'Email', 'Catégorie', 'Statut', 'Paiement', 'Prix (' + CURRENCY + ')', 'Réduction (' + CURRENCY + ')', 'Net (' + CURRENCY + ')'];
+        const rows = allBookings.map(b => {
+            const base = b.price || PRICES[b.category] || 0;
+            const discount = b.discount || 0;
+            const net = Math.max(0, base - discount);
+            const payLabel = b.payment_method === 'especes' ? 'Espèces' : b.payment_method === 'cheque' ? 'Chèque' : '';
+            return [b.date || '', b.time || '', b.client_name || '', b.phone || '', b.email || '', b.category || '', b.status || '', payLabel, base, discount, net];
+        });
         let csv = '﻿' + headers.join(';') + '\n';
         rows.forEach(r => { csv += r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(';') + '\n'; });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -281,6 +293,66 @@
         const status = document.getElementById('emailSaveStatus');
         status.style.display = 'inline';
         setTimeout(() => status.style.display = 'none', 3000);
+    };
+
+    // ─── Newsletter ───
+    let clientEmails = [];
+
+    window.loadClientEmails = async function() {
+        try {
+            const data = await apiFetch('/.netlify/functions/get-client-emails?center=' + CENTER_ID);
+            clientEmails = data.emails || [];
+            const badge = document.getElementById('clientEmailCount');
+            if (badge) badge.textContent = clientEmails.length + ' client' + (clientEmails.length !== 1 ? 's' : '');
+        } catch (e) {
+            console.error('Erreur chargement emails:', e);
+        }
+    };
+
+    window.sendNewsletter = async function() {
+        const subject = document.getElementById('newsletterSubject').value.trim();
+        const message = document.getElementById('newsletterMessage').value.trim();
+        const statusEl = document.getElementById('newsletterStatus');
+
+        if (!subject || !message) {
+            statusEl.textContent = 'Veuillez remplir le sujet et le message.';
+            statusEl.className = 'newsletter-status error';
+            statusEl.style.display = 'inline';
+            setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+            return;
+        }
+
+        if (!clientEmails.length) {
+            statusEl.textContent = 'Aucun client avec email enregistré.';
+            statusEl.className = 'newsletter-status error';
+            statusEl.style.display = 'inline';
+            setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+            return;
+        }
+
+        try {
+            const emailList = clientEmails.map(c => c.email);
+            const res = await fetch('/.netlify/functions/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to: emailList, subject, message })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                statusEl.textContent = '✓ Newsletter envoyée à ' + data.sent + ' client(s)';
+                statusEl.className = 'newsletter-status ok';
+                document.getElementById('newsletterSubject').value = '';
+                document.getElementById('newsletterMessage').value = '';
+            } else {
+                throw new Error(data.message || 'Erreur inconnue');
+            }
+        } catch (e) {
+            statusEl.textContent = '✗ Erreur: ' + e.message;
+            statusEl.className = 'newsletter-status error';
+        }
+        statusEl.style.display = 'inline';
+        setTimeout(() => { statusEl.style.display = 'none'; }, 6000);
     };
 
     // ─── PWA ───

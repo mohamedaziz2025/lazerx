@@ -4,7 +4,7 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers: CORS, body: '' };
 
   try {
-    const { id, attendance, status, price, notes } = JSON.parse(event.body || '{}');
+    const { id, attendance, status, price, notes, discount, payment_method } = JSON.parse(event.body || '{}');
     if (!id) return err(400, 'id required');
 
     const updates = {};
@@ -12,6 +12,8 @@ exports.handler = async (event) => {
     if (status !== undefined) updates.status = status;
     if (price !== undefined) updates.price = price;
     if (notes !== undefined) updates.notes = notes;
+    if (discount !== undefined) updates.discount = discount;
+    if (payment_method !== undefined) updates.payment_method = payment_method;
 
     const col = await getCollection();
     const result = await col.updateOne({ id }, { $set: updates });
