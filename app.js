@@ -60,6 +60,7 @@ let draggedBooking = null;
 let draggedElement = null;
 let pendingDuplicateData = null;
 let supabaseClient = null;
+let weekNavDirection = 0;
 
 // ===== Date Utilities =====
 function getWeekStart(date = new Date()) {
@@ -105,6 +106,12 @@ function renderCalendar() {
   const weekDates = generateWeekDates(currentWeekStart);
   calendar.innerHTML = '';
   if (window.innerWidth <= 768) { renderMobileCalendar(calendar, weekDates); } else { renderDesktopCalendar(calendar, weekDates); }
+  if (weekNavDirection !== 0) {
+    const cls = weekNavDirection > 0 ? 'calendar-slide-next' : 'calendar-slide-prev';
+    calendar.classList.add(cls);
+    setTimeout(() => calendar.classList.remove(cls), 280);
+    weekNavDirection = 0;
+  }
 }
 
 function renderDesktopCalendar(calendar, weekDates) {
@@ -234,7 +241,7 @@ function updateWeekTitle() {
   weekEnd.setDate(currentWeekStart.getDate() + 5);
   document.getElementById('weekTitle').textContent = `Planning ${CENTER_NAME} \u2014 Semaine du ${formatDate(currentWeekStart)} au ${formatDate(weekEnd)}`;
 }
-function navigateWeek(direction) { const nw = new Date(currentWeekStart); nw.setDate(currentWeekStart.getDate()+(direction*7)); currentWeekStart=nw; updateWeekTitle(); loadWeekBookings(); }
+function navigateWeek(direction) { weekNavDirection = direction; const nw = new Date(currentWeekStart); nw.setDate(currentWeekStart.getDate()+(direction*7)); currentWeekStart=nw; updateWeekTitle(); loadWeekBookings(); }
 function goToCurrentWeek() { currentWeekStart = getWeekStart(); updateWeekTitle(); loadWeekBookings(); }
 
 // ===== API =====
@@ -666,6 +673,59 @@ function initializeEventListeners() {
   window.addEventListener('resize', ()=>{ clearTimeout(window.resizeTimeout); window.resizeTimeout=setTimeout(renderCalendar,250); });
 }
 
+// ===== Swipe Navigation (touch + mouse) =====
+function initializeSwipeNavigation() {
+  const container = document.querySelector('.calendar-container');
+  if (!container) return;
+
+  let txStart = 0, tyStart = 0;
+  let mxStart = 0, myStart = 0;
+  let mouseActive = false, mouseOnBooking = false;
+
+  // Touch (mobile + tablet)
+  container.addEventListener('touchstart', e => {
+    txStart = e.touches[0].clientX;
+    tyStart = e.touches[0].clientY;
+  }, { passive: true });
+
+  container.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - txStart;
+    const dy = e.changedTouches[0].clientY - tyStart;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) {
+      navigateWeek(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+
+  // Mouse (desktop swipe)
+  container.addEventListener('mousedown', e => {
+    mxStart = e.clientX;
+    myStart = e.clientY;
+    mouseActive = true;
+    mouseOnBooking = !!e.target.closest('.cell--booked');
+  });
+
+  document.addEventListener('mouseup', e => {
+    if (!mouseActive) return;
+    mouseActive = false;
+    if (mouseOnBooking || draggedBooking) return;
+    const dx = e.clientX - mxStart;
+    const dy = e.clientY - myStart;
+    if (Math.abs(dx) > 100 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      navigateWeek(dx < 0 ? 1 : -1);
+    }
+  });
+
+  container.addEventListener('mouseleave', () => { mouseActive = false; });
+
+  // Keyboard arrows (desktop)
+  document.addEventListener('keydown', e => {
+    if (document.querySelector('dialog[open]')) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowLeft')  navigateWeek(-1);
+    if (e.key === 'ArrowRight') navigateWeek(1);
+  });
+}
+
 // ===== Realtime (polling) =====
 function initializeRealtime() {
   setInterval(loadWeekBookings, 30000);
@@ -708,6 +768,7 @@ function init() {
   currentWeekStart = getWeekStart();
   updateWeekTitle();
   initializeEventListeners();
+  initializeSwipeNavigation();
   loadWeekBookings();
   initializeRealtime();
 }

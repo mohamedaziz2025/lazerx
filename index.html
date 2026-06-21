@@ -2,14 +2,20 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Planning LazerX Nabeul</title>
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=3">
     <meta name="theme-color" content="#1e3a8a">
     <meta name="description" content="Planning des rendez-vous LazerX Nabeul">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LazerX">
+    <meta name="mobile-web-app-capable" content="yes">
 </head>
 <body>
     <!-- Auth Overlay -->
@@ -139,6 +145,29 @@
     <footer class="footer">
         <p>&#169; 2025 LazerX Nabeul &mdash; <a href="dashboard.html">&#128202; Dashboard</a> &bull; <a href="suivi.html">&#128203; Suivi des séances</a></p>
     </footer>
-    <script src="app.js?v=2"></script>
+    <nav class="bottom-nav" aria-label="Navigation principale">
+        <a href="index.html" class="bottom-nav-item bottom-nav-item--active" aria-current="page">
+            <span class="bottom-nav-icon">&#128197;</span>
+            <span>Planning</span>
+        </a>
+        <a href="dashboard.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">&#128202;</span>
+            <span>Dashboard</span>
+        </a>
+        <a href="suivi.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">&#128203;</span>
+            <span>Suivi</span>
+        </a>
+        <button class="bottom-nav-item" onclick="lockApp()">
+            <span class="bottom-nav-icon">&#128274;</span>
+            <span>Verrou</span>
+        </button>
+    </nav>
+    <script src="app.js?v=3"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+      }
+    </script>
 </body>
 </html>

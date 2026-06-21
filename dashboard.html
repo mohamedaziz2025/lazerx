@@ -2,12 +2,18 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Dashboard &#8212; LazerX Nabeul</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LazerX">
+    <meta name="theme-color" content="#1e3a8a">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
         :root {
@@ -27,6 +33,18 @@
             --shadow-lg: 0 8px 32px rgba(0,0,0,.10);
         }
         body { background: var(--bg); color: var(--text); min-height: 100vh; }
+        @media (max-width: 768px) {
+            body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); overscroll-behavior-y: none; }
+            footer { display: none; }
+        }
+        .bottom-nav { display: none; }
+        @media (max-width: 768px) {
+            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 500; background: #fff; border-top: 1px solid #e2e8f0; padding-bottom: env(safe-area-inset-bottom,0px); box-shadow: 0 -2px 14px rgba(0,0,0,.09); }
+            .bottom-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .18rem; padding: .5rem .25rem; min-height: 56px; text-decoration: none; color: #64748b; font-size: .62rem; font-weight: 500; background: none; border: none; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; transition: color .15s, opacity .1s; }
+            .bottom-nav-item--active { color: #2563eb; font-weight: 700; }
+            .bottom-nav-item:active { opacity: .6; }
+            .bottom-nav-icon { font-size: 1.25rem; line-height: 1; display: block; }
+        }
 
         /* Header */
         .page-header {
@@ -379,11 +397,74 @@
                 <button class="btn btn-primary" id="pwaInstallBtn" onclick="installPWA()" style="display:none;white-space:nowrap;">Installer l'app</button>
             </div>
         </div>
+
+        <!-- Reset Base -->
+        <div class="section">
+            <div class="section-title" style="color:var(--danger);">&#9888; Zone dangereuse</div>
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius);padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                <div>
+                    <strong style="color:var(--danger);font-size:15px;">Réinitialiser la base de données</strong>
+                    <p style="color:#64748b;font-size:13px;margin:4px 0 0;">Supprime <strong>définitivement</strong> tous les rendez-vous du centre nabeul. Action irréversible.</p>
+                </div>
+                <button class="btn" onclick="confirmResetDB()" style="background:var(--danger);color:#fff;white-space:nowrap;flex-shrink:0;">&#128465; Réinitialiser</button>
+            </div>
+        </div>
     </div>
+    <dialog id="resetModal" style="border:none;border-radius:16px;padding:0;max-width:420px;width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.15);">
+        <div style="padding:24px;">
+            <h2 style="color:#dc2626;margin:0 0 12px;font-size:18px;">&#9888; Confirmer la réinitialisation</h2>
+            <p style="color:#475569;font-size:14px;margin:0 0 20px;">Cette action supprimera <strong>tous les rendez-vous</strong> du centre. Elle est <strong>irréversible</strong>.</p>
+            <p style="color:#475569;font-size:14px;margin:0 0 12px;">Entrez le code de sécurité :</p>
+            <input type="password" id="resetConfirmInput" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;" maxlength="6" autocomplete="off" style="width:100%;padding:12px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:22px;box-sizing:border-box;margin-bottom:8px;font-family:inherit;letter-spacing:8px;text-align:center;">
+            <p id="resetError" style="color:#dc2626;font-size:13px;margin:0 0 16px;display:none;font-weight:500;">Code incorrect</p>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button onclick="document.getElementById('resetModal').close()" style="padding:10px 20px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;font-family:inherit;font-size:14px;">Annuler</button>
+                <button onclick="executeResetDB()" style="padding:10px 20px;border:none;border-radius:10px;background:#dc2626;color:#fff;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;">&#128465; Supprimer tout</button>
+            </div>
+        </div>
+    </dialog>
 
     <footer>&#169; 2025 LazerX Nabeul &mdash; <a href="index.html">&#128197; Planning</a> &bull; <a href="suivi.html">&#128203; Suivi</a></footer>
 
+    <nav class="bottom-nav" aria-label="Navigation principale">
+        <a href="index.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">&#128197;</span>
+            <span>Planning</span>
+        </a>
+        <a href="dashboard.html" class="bottom-nav-item bottom-nav-item--active" aria-current="page">
+            <span class="bottom-nav-icon">&#128202;</span>
+            <span>Dashboard</span>
+        </a>
+        <a href="suivi.html" class="bottom-nav-item">
+            <span class="bottom-nav-icon">&#128203;</span>
+            <span>Suivi</span>
+        </a>
+    </nav>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="dashboard.js?v=2"></script>
+    <script>
+      function confirmResetDB() {
+        document.getElementById('resetConfirmInput').value = '';
+        document.getElementById('resetError').style.display = 'none';
+        document.getElementById('resetModal').showModal();
+        setTimeout(() => document.getElementById('resetConfirmInput').focus(), 100);
+      }
+      async function executeResetDB() {
+        const val = document.getElementById('resetConfirmInput').value.trim();
+        if (val !== '898055') {
+          document.getElementById('resetError').style.display = 'block';
+          document.getElementById('resetConfirmInput').value = '';
+          document.getElementById('resetConfirmInput').focus();
+          return;
+        }
+        try {
+          const r = await fetch('/.netlify/functions/reset-db', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ center:'nabeul', confirm:'RESET' }) });
+          const d = await r.json();
+          document.getElementById('resetModal').close();
+          alert(d.message || 'Base réinitialisée.');
+        } catch(e) { alert('Erreur: ' + e.message); }
+      }
+    </script>
 </body>
 </html>
