@@ -4,10 +4,16 @@ let client;
 
 async function getCollection() {
   if (!client) {
-    client = new MongoClient(process.env.MONGODB_URI);
+    const uri = process.env.MONGODB_URI;
+    if (!uri) throw new Error('MONGODB_URI non défini dans les variables d\'environnement');
+    client = new MongoClient(uri, {
+      serverSelectionTimeoutMS: 8000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 30000
+    });
     await client.connect();
   }
-  return client.db('lazerx').collection('bookings');
+  return client.db().collection('bookings');
 }
 
 // Africa/Tunis = UTC+1, no DST
