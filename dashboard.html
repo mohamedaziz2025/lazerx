@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard &#8212; LazerX Nabeul</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+        :root {
+            --brand: #1e3a8a;
+            --brand-mid: #2563eb;
+            --brand-light: #3b82f6;
+            --surface: #ffffff;
+            --bg: #f1f5f9;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,.10);
+        }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-height: 64px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.2);
+        }
+        .page-header img { width: 40px; height: 40px; border-radius: 8px; }
+        .header-info h1 { font-size: 18px; font-weight: 700; color: #fff; line-height: 1.2; }
+        .header-info .subtitle { font-size: 12px; color: rgba(255,255,255,.7); }
+        .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; margin-left: 6px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .header-nav { display: flex; gap: 6px; margin-left: auto; }
+        .header-nav a {
+            color: rgba(255,255,255,.9); text-decoration: none;
+            padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+            background: rgba(255,255,255,.12); transition: background .15s;
+        }
+        .header-nav a:hover { background: rgba(255,255,255,.22); }
+
+        /* Auth overlay */
+        .auth-overlay {
+            position: fixed; inset: 0; display: none;
+            align-items: center; justify-content: center; z-index: 9999;
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%);
+        }
+        .auth-box {
+            background: #fff; border-radius: 20px; padding: 40px 36px;
+            text-align: center; max-width: 360px; width: 92%;
+            box-shadow: 0 24px 64px rgba(0,0,0,.3);
+        }
+        .auth-box img { width: 72px; margin-bottom: 16px; border-radius: 12px; }
+        .auth-box h2 { color: var(--brand); margin-bottom: 6px; font-size: 20px; }
+        .auth-box p { color: #888; font-size: 14px; margin-bottom: 24px; }
+        .auth-box input {
+            width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px;
+            text-align: center; font-size: 22px; letter-spacing: 10px; font-weight: 700;
+            box-sizing: border-box; transition: border-color .2s; outline: none;
+        }
+        .auth-box input:focus { border-color: var(--brand-mid); }
+        .auth-error { color: #dc2626; font-size: 13px; margin-top: 10px; display: none; font-weight: 500; }
+
+        /* Layout */
+        .content { max-width: 1300px; margin: 0 auto; padding: 24px; }
+
+        /* KPI Grid */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card {
+            background: var(--surface); border-radius: var(--radius); padding: 20px;
+            box-shadow: var(--shadow); border-top: 3px solid transparent; position: relative; overflow: hidden;
+        }
+        .kpi-card:nth-child(1) { border-top-color: var(--brand-mid); }
+        .kpi-card:nth-child(2) { border-top-color: #7c3aed; }
+        .kpi-card:nth-child(3) { border-top-color: var(--brand-light); }
+        .kpi-card:nth-child(4) { border-top-color: var(--success); }
+        .kpi-card:nth-child(5) { border-top-color: var(--warning); }
+        .kpi-card:nth-child(6) { border-top-color: var(--danger); }
+        .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: .6px; }
+        .kpi-value { font-size: 30px; font-weight: 700; color: var(--text); margin-top: 8px; line-height: 1; }
+        .kpi-unit { font-size: 15px; color: var(--muted); font-weight: 400; }
+
+        /* Sections */
+        .section { background: var(--surface); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .section-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+        .section-title::before { content: ''; width: 3px; height: 18px; background: var(--brand-mid); border-radius: 2px; flex-shrink: 0; }
+
+        /* Chart */
+        .chart-container { position: relative; height: 280px; }
+
+        /* Filters */
+        .filters-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+        .filters-bar select, .filters-bar input[type="date"], .filters-bar input[type="text"] {
+            padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 13px; color: var(--text); background: var(--surface);
+            font-family: inherit; outline: none; transition: border-color .15s;
+        }
+        .filters-bar select:focus, .filters-bar input:focus { border-color: var(--brand-mid); }
+        .filters-bar input[type="text"] { min-width: 160px; }
+
+        /* Buttons */
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; transition: all .15s; }
+        .btn-primary { background: var(--brand); color: #fff; }
+        .btn-primary:hover { background: var(--brand-mid); }
+        .btn-outline { background: transparent; border: 1px solid var(--brand); color: var(--brand); }
+        .btn-outline:hover { background: var(--brand); color: #fff; }
+
+        /* Table */
+        .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead th {
+            background: #f8fafc; padding: 10px 14px; text-align: left;
+            font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border);
+            cursor: pointer; white-space: nowrap; font-size: 12px; text-transform: uppercase; letter-spacing: .4px;
+        }
+        thead th:hover { color: var(--brand); }
+        tbody td { padding: 11px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #f8fafc; }
+        .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        .status-confirmed { background: #dcfce7; color: #15803d; }
+        .status-pending { background: #fef3c7; color: #b45309; }
+        .status-cancelled { background: #fee2e2; color: #b91c1c; }
+        .loading { text-align: center; padding: 40px; color: var(--muted); }
+
+        /* Email & PWA */
+        .email-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .email-grid label { display: block; font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 6px; }
+        .email-grid input, .email-grid select {
+            width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--text);
+        }
+        .save-row { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
+        .save-ok { font-size: 13px; color: var(--success); display: none; }
+        .pwa-row { display: flex; align-items: center; gap: 14px; }
+        .pwa-desc { font-size: 14px; color: var(--muted); }
+
+        /* Footer */
+        footer { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+        footer a { color: var(--brand); text-decoration: none; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-header { flex-wrap: wrap; padding: 12px 16px; gap: 10px; }
+            .header-nav { margin-left: 0; }
+            .content { padding: 16px; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .email-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-box">
+            <img src="assets/logo.png" alt="LazerX">
+            <h2>LazerX Nabeul</h2>
+            <p>Entrez le code PIN pour accéder au dashboard</p>
+            <input type="password" id="pinInput" maxlength="6" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;" autocomplete="off">
+            <div class="auth-error" id="pinError">Code PIN incorrect</div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header">
+        <img src="assets/logo.png" alt="Logo">
+        <div class="header-info">
+            <h1>LazerX Nabeul</h1>
+            <div class="subtitle">Dashboard &bull; Nabeul, Tunisie <span class="live-dot" id="liveIndicator"></span></div>
+        </div>
+        <nav class="header-nav">
+            <a href="index.html">&#128197; Planning</a>
+            <a href="suivi.html">&#128203; Suivi</a>
+            <button onclick="lockSession()" class="header-nav a" style="background:rgba(255,80,80,0.2);border:none;cursor:pointer;padding:7px 14px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;font-family:inherit;" title="Verrouiller">&#128274;</button>
+        </nav>
+    </div>
+
+    <div class="content">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Réservations semaine</div>
+                <div class="kpi-value" id="kpiWeeklyBookings">&#8212;</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Taux de remplissage</div>
+                <div class="kpi-value" id="kpiFillRate">&#8212; <span class="kpi-unit">%</span></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total réservations</div>
+                <div class="kpi-value" id="kpiTotalBookings">&#8212;</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Revenu confirmé</div>
+                <div class="kpi-value" id="kpiConfirmedRevenue">&#8212; <span class="kpi-unit">DT</span></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Revenu attendu</div>
+                <div class="kpi-value" id="kpiExpectedRevenue">&#8212; <span class="kpi-unit">DT</span></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Séances en attente</div>
+                <div class="kpi-value" id="kpiPendingSessions">&#8212;</div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="section">
+            <div class="section-title">Répartition par catégorie</div>
+            <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+        </div>
+
+        <!-- Bookings Table -->
+        <div class="section">
+            <div class="section-title">Réservations</div>
+            <div class="filters-bar">
+                <select id="filterStatus"><option value="">Tous les statuts</option><option value="confirmed">Confirmé</option><option value="pending">En attente</option><option value="cancelled">Annulé</option></select>
+                <select id="filterCategory"><option value="">Toutes catégories</option><option value="tabac">Tabac</option><option value="drogue">Drogue</option><option value="drogue_dure">Drogue dure</option><option value="drogue_douce">Drogue douce</option><option value="renforcement">Renforcement</option></select>
+                <input type="date" id="filterDateFrom" title="Date début">
+                <input type="date" id="filterDateTo" title="Date fin">
+                <input type="text" id="filterSearch" placeholder="&#128269; Rechercher...">
+                <button class="btn btn-primary" onclick="applyFilters()">Filtrer</button>
+                <button class="btn btn-outline" onclick="resetFilters()">Réinitialiser</button>
+                <button class="btn btn-outline" onclick="exportCSV()">&#128229; Export CSV</button>
+            </div>
+            <div class="table-wrapper">
+                <table id="bookingsTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('date')">Date &#8597;</th>
+                            <th onclick="sortTable('time')">Heure &#8597;</th>
+                            <th onclick="sortTable('name')">Nom &#8597;</th>
+                            <th>Téléphone</th>
+                            <th onclick="sortTable('category')">Catégorie &#8597;</th>
+                            <th onclick="sortTable('status')">Statut &#8597;</th>
+                            <th onclick="sortTable('revenue')">Montant &#8597;</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingsBody">
+                        <tr><td colspan="7" class="loading">Chargement...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Email Config -->
+        <div class="section">
+            <div class="section-title">Notifications email</div>
+            <div class="email-grid">
+                <div>
+                    <label>Email de notification</label>
+                    <input type="email" id="notifEmail" placeholder="email@exemple.com">
+                </div>
+                <div>
+                    <label>Fréquence de rapport</label>
+                    <select id="reportFrequency"><option value="daily">Quotidien</option><option value="weekly" selected>Hebdomadaire</option><option value="monthly">Mensuel</option></select>
+                </div>
+            </div>
+            <div class="save-row">
+                <button class="btn btn-primary" onclick="saveEmailConfig()">Enregistrer</button>
+                <span id="emailSaveStatus" class="save-ok">&#10003; Enregistré</span>
+            </div>
+        </div>
+
+        <!-- PWA -->
+        <div class="section">
+            <div class="section-title">Application mobile</div>
+            <div class="pwa-row">
+                <p class="pwa-desc">Installez le dashboard comme application sur votre appareil pour un accès rapide.</p>
+                <button class="btn btn-primary" id="pwaInstallBtn" onclick="installPWA()" style="display:none;white-space:nowrap;">Installer l'app</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>&#169; 2025 LazerX Nabeul &mdash; <a href="index.html">&#128197; Planning</a> &bull; <a href="suivi.html">&#128203; Suivi</a></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="dashboard.js?v=2"></script>
+</body>
+</html>

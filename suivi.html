@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi des séances &#8212; LazerX Nabeul</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+        :root {
+            --brand: #1e3a8a;
+            --brand-mid: #2563eb;
+            --brand-light: #3b82f6;
+            --surface: #ffffff;
+            --bg: #f1f5f9;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+        }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-height: 64px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.2);
+        }
+        .page-header img { width: 40px; height: 40px; border-radius: 8px; }
+        .header-info h1 { font-size: 18px; font-weight: 700; color: #fff; }
+        .header-info .subtitle { font-size: 12px; color: rgba(255,255,255,.7); }
+        .header-nav { display: flex; gap: 6px; margin-left: auto; }
+        .header-nav a {
+            color: rgba(255,255,255,.9); text-decoration: none;
+            padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+            background: rgba(255,255,255,.12); transition: background .15s;
+        }
+        .header-nav a:hover { background: rgba(255,255,255,.22); }
+
+        /* Auth overlay */
+        .auth-overlay {
+            position: fixed; inset: 0; display: none;
+            align-items: center; justify-content: center; z-index: 9999;
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%);
+        }
+        .auth-box {
+            background: #fff; border-radius: 20px; padding: 40px 36px;
+            text-align: center; max-width: 360px; width: 92%;
+            box-shadow: 0 24px 64px rgba(0,0,0,.3);
+        }
+        .auth-box img { width: 72px; margin-bottom: 16px; border-radius: 12px; }
+        .auth-box h2 { color: var(--brand); margin-bottom: 6px; font-size: 20px; }
+        .auth-box p { color: #888; font-size: 14px; margin-bottom: 24px; }
+        .auth-box input {
+            width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px;
+            text-align: center; font-size: 22px; letter-spacing: 10px; font-weight: 700;
+            box-sizing: border-box; transition: border-color .2s; outline: none;
+        }
+        .auth-box input:focus { border-color: var(--brand-mid); }
+        .auth-error { color: #dc2626; font-size: 13px; margin-top: 10px; display: none; font-weight: 500; }
+
+        /* Batch bar */
+        .batch-bar {
+            background: var(--brand); color: #fff; padding: 10px 24px;
+            display: none; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .batch-bar.visible { display: flex; }
+        .batch-btn { padding: 6px 14px; border: 1px solid rgba(255,255,255,.4); border-radius: 8px; background: rgba(255,255,255,.15); color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s; font-family: inherit; }
+        .batch-btn:hover { background: rgba(255,255,255,.25); }
+
+        /* Content */
+        .content { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+        /* Financial cards */
+        .fin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .fin-card { background: var(--surface); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); border-left: 4px solid var(--brand-mid); }
+        .fin-card:nth-child(2) { border-left-color: #7c3aed; }
+        .fin-card:nth-child(3) { border-left-color: var(--success); }
+        .fin-card:nth-child(4) { border-left-color: var(--warning); }
+        .fin-label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: .5px; }
+        .fin-value { font-size: 26px; font-weight: 700; color: var(--text); margin-top: 6px; line-height: 1; }
+        .fin-unit { font-size: 14px; color: var(--muted); font-weight: 400; }
+        .chart-container { height: 240px; position: relative; margin-top: 16px; }
+
+        /* Section */
+        .section { background: var(--surface); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .section-title { font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+        .section-title::before { content: ''; width: 3px; height: 18px; background: var(--brand-mid); border-radius: 2px; flex-shrink: 0; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+
+        /* Buttons */
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; transition: all .15s; }
+        .btn-primary { background: var(--brand); color: #fff; }
+        .btn-primary:hover { background: var(--brand-mid); }
+        .btn-outline { background: transparent; border: 1px solid var(--brand); color: var(--brand); }
+        .btn-outline:hover { background: var(--brand); color: #fff; }
+        .btn-present { background: #dcfce7; color: #15803d; font-weight: 600; }
+        .btn-present:hover { background: #bbf7d0; }
+        .btn-absent { background: #fee2e2; color: #b91c1c; font-weight: 600; }
+        .btn-absent:hover { background: #fecaca; }
+        .btn-reschedule { background: #fef3c7; color: #b45309; font-weight: 600; }
+        .btn-reschedule:hover { background: #fde68a; }
+
+        /* Session cards */
+        .session-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px 18px;
+            margin-bottom: 10px; transition: all .2s;
+            border-left: 4px solid transparent;
+        }
+        .session-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); border-left-color: var(--brand-mid); }
+        .session-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .session-name { font-weight: 700; font-size: 15px; color: var(--text); }
+        .session-meta { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.6; }
+        .session-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .price-tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #eff6ff; color: var(--brand-mid); }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 48px; color: var(--muted); font-size: 15px; }
+
+        /* Checkbox */
+        .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .checkbox-label input { width: auto; accent-color: var(--brand-mid); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.6); display: none; align-items: center; justify-content: center; z-index: 9000; backdrop-filter: blur(2px); }
+        .modal-overlay.active { display: flex; }
+        .modal-box { background: var(--surface); border-radius: 16px; padding: 28px; max-width: 480px; width: 92%; max-height: 85vh; overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,.2); }
+        .modal-box h3 { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 14px; font-family: inherit; color: var(--text);
+            background: var(--bg); transition: border-color .15s;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--brand-mid); background: var(--surface); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .price-hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+        /* Footer */
+        footer { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+        footer a { color: var(--brand); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .page-header { flex-wrap: wrap; padding: 12px 16px; gap: 10px; }
+            .header-nav { margin-left: 0; }
+            .content { padding: 14px; }
+            .fin-grid { grid-template-columns: repeat(2, 1fr); }
+            .session-actions { gap: 6px; }
+            .btn { padding: 7px 12px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-box">
+            <img src="assets/logo.png" alt="LazerX">
+            <h2>LazerX Nabeul</h2>
+            <p>Entrez le code PIN pour accéder au suivi</p>
+            <input type="password" id="pinInput" maxlength="6" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;" autocomplete="off">
+            <div class="auth-error" id="pinError">Code PIN incorrect</div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header">
+        <img src="assets/logo.png" alt="Logo">
+        <div class="header-info">
+            <h1>LazerX Nabeul</h1>
+            <div class="subtitle">Suivi des séances &bull; Nabeul, Tunisie</div>
+        </div>
+        <nav class="header-nav">
+            <a href="index.html">&#128197; Planning</a>
+            <a href="dashboard.html">&#128202; Dashboard</a>
+            <button onclick="lockSession()" style="background:rgba(255,80,80,0.2);border:none;cursor:pointer;padding:7px 14px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;font-family:inherit;" title="Verrouiller">&#128274;</button>
+        </nav>
+    </div>
+
+    <!-- Batch Bar -->
+    <div class="batch-bar" id="batchBar">
+        <span><strong id="batchCount">0</strong> séances sélectionnées</span>
+        <div style="display:flex;gap:8px;">
+            <button class="batch-btn" onclick="batchConfirm('present')">&#10003; Tous présents</button>
+            <button class="batch-btn" onclick="batchConfirm('absent')">&#10007; Tous absents</button>
+            <button class="batch-btn" onclick="clearBatch()">Annuler</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- Financial Summary -->
+        <div class="section">
+            <div class="section-title" style="margin-bottom:18px;">Résumé financier</div>
+            <div class="fin-grid">
+                <div class="fin-card">
+                    <div class="fin-label">Revenu aujourd'hui</div>
+                    <div class="fin-value" id="finToday">0 <span class="fin-unit">DT</span></div>
+                </div>
+                <div class="fin-card">
+                    <div class="fin-label">Revenu semaine</div>
+                    <div class="fin-value" id="finWeek">0 <span class="fin-unit">DT</span></div>
+                </div>
+                <div class="fin-card">
+                    <div class="fin-label">Séances confirmées</div>
+                    <div class="fin-value" id="finConfirmedCount">0</div>
+                </div>
+                <div class="fin-card">
+                    <div class="fin-label">Taux de présence</div>
+                    <div class="fin-value" id="finAttendanceRate">0 <span class="fin-unit">%</span></div>
+                </div>
+            </div>
+            <div class="chart-container"><canvas id="weeklyChart"></canvas></div>
+        </div>
+
+        <!-- Pending Sessions -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Séances en attente</div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-outline" onclick="toggleBatchMode()">&#9634; Sélection multiple</button>
+                    <button class="btn btn-outline" onclick="exportFinances()">&#128229; Export finances</button>
+                </div>
+            </div>
+            <div id="sessionsList">
+                <div class="empty-state">Chargement des séances...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Modal -->
+    <div class="modal-overlay" id="sessionModal">
+        <div class="modal-box">
+            <h3>Détails de la séance</h3>
+            <div class="form-group"><label>Client</label><input type="text" id="modalName" readonly></div>
+            <div class="form-group"><label>Téléphone</label><input type="text" id="modalPhone" readonly></div>
+            <div class="form-group"><label>Catégorie</label><input type="text" id="modalCategory" readonly></div>
+            <div class="form-group"><label>Date &amp; Heure</label><input type="text" id="modalDateTime" readonly></div>
+            <div class="form-group">
+                <label>Prix (DT)</label>
+                <input type="number" id="modalPrice" min="0" step="50">
+                <div class="price-hint" id="modalStandardPrice"></div>
+            </div>
+            <div class="form-group"><label>Notes</label><input type="text" id="modalNotes" placeholder="Notes optionnelles..."></div>
+            <div class="form-group">
+                <label>Présence</label>
+                <select id="modalAttendance">
+                    <option value="">-- Sélectionner --</option>
+                    <option value="present">Présent</option>
+                    <option value="absent">Absent</option>
+                    <option value="rescheduled">Reporté</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+                <button class="btn btn-primary" onclick="saveSession()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>&#169; 2025 LazerX Nabeul &mdash; <a href="index.html">&#128197; Planning</a> &bull; <a href="dashboard.html">&#128202; Dashboard</a></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="suivi.js?v=2"></script>
+</body>
+</html>

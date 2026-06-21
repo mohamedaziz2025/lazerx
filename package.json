@@ -1,0 +1,14 @@
+{
+  "name": "lazerx-nabeul",
+  "version": "1.0.0",
+  "description": "LazerX Nabeul - Booking Calendar",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "mongodb": "^6.3.0",
+    "dotenv": "^16.0.0"
+  }
+}
